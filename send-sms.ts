@@ -40,7 +40,7 @@ export default async function handler(req: any, res: any) {
     `Detected value: ${value} ${rule.unit}`,
     `Configured safe range: ${rule.min}–${rule.max} ${rule.unit}`,
     'Reading is outside the configured range. Please inspect the water source. This alert does not confirm contamination.',
-  ].join('\n');
+  ].join('\\n');
 
   try {
     const auth = Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString('base64');
@@ -63,14 +63,9 @@ export default async function handler(req: any, res: any) {
     const result = await providerResponse.json() as { sid?: string; status?: string; code?: number; message?: string };
     if (!providerResponse.ok) {
       console.error('SMS provider rejected request:', result.code, result.message);
-      // Return the provider's non-secret diagnostic details so the dashboard
-      // can show the exact Twilio error code/message during troubleshooting.
       return res.status(502).json({
         ok: false,
-        error: result.message || 'SMS provider rejected the request.',
-        provider: 'Twilio',
-        providerCode: result.code ?? null,
-        providerStatus: providerResponse.status,
+        error: 'SMS provider rejected the request. Check account permissions, sender number, and destination.',
       });
     }
     return res.status(200).json({ ok: true, status: result.status ?? 'accepted', messageId: result.sid });
